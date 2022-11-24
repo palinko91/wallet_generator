@@ -1,13 +1,13 @@
 extern crate rand;
-use bip39::{Mnemonic, Language};
-use secp256k1::{Secp256k1, KeyPair, PublicKey};
-use tiny_keccak::keccak256;
-use web3::types::Address;
+use bip39::{Language, Mnemonic};
 use rustc_hex::ToHex;
+use secp256k1::{KeyPair, PublicKey, Secp256k1};
+use std::io::Write;
+use std::str::FromStr;
 use tiny_hderive::bip32::ExtendedPrivKey;
 use tiny_hderive::bip44::DerivationPath;
-use std::str::FromStr;
-use std::io::Write;
+use tiny_keccak::keccak256;
+use web3::types::Address;
 
 // Function to make the wallet address from the public key
 pub fn public_key_address_generator(public_key: &PublicKey) -> Address {
@@ -26,13 +26,17 @@ fn main() {
     let englishwords = Mnemonic::to_string(&mnemo);
     let mut output = format!("\nThe mnemonic words are = {:?}", &englishwords);
     file.write_all(output.as_bytes()).expect("write failed");
-        
+
     // Make the seed for derivation and for the hex
-    let seed = Mnemonic::to_seed(&mnemo,"");
+    let seed = Mnemonic::to_seed(&mnemo, "");
     let bip39_seed: String = seed.to_hex();
-    output = format!("\n\nThe BIP39 seed is = {}\n \n \n",bip39_seed);
+    output = format!("\n\nThe BIP39 seed is = {}\n \n \n", bip39_seed);
     file.write_all(output.as_bytes()).expect("write failed");
-    file.write_all("------------------------------------------------------------------------------------".as_bytes()).expect("write failed");
+    file.write_all(
+        "------------------------------------------------------------------------------------"
+            .as_bytes(),
+    )
+    .expect("write failed");
     let secp = Secp256k1::new();
 
     // Set here how many wallet you want for the same mnemonic
@@ -41,7 +45,7 @@ fn main() {
         let derive_path_str = format!("m/44'/60'/0'/0/{i}");
         let derive_path = DerivationPath::from_str(&derive_path_str).unwrap();
         let derived = ExtendedPrivKey::derive(&seed, derive_path).unwrap();
-        let keypair= KeyPair::from_seckey_slice(&secp, &derived.secret()).unwrap();
+        let keypair = KeyPair::from_seckey_slice(&secp, &derived.secret()).unwrap();
         let public_key = PublicKey::from_keypair(&keypair);
         let public_address = public_key_address_generator(&public_key);
         let public_key_0x = public_key.to_string();
